@@ -1,0 +1,15 @@
+[package]
+name = "coolboy"
+version = "0.1.0"
+edition = "2021"
+description = "Multi threads Game Boy Color Emulator."
+authors = ["jmjoy <jmjoy@apache.org>"]
+
+[dependencies]
+anyhow = "1.0.82"
+bitflags = "2.5.0"
+clap = { version = "4.5.4", features = ["derive"] }
+enum_dispatch = "0.3.13"
+env_logger = { version = "0.11.3", features = ["unstable-kv"] }
+log = { version = "0.4.21", features = ["kv"] }
+tokio = { version = "1.37.0", features = ["full"] }
