@@ -1,42 +1,41 @@
-use super::{Addr, InstructionControl, Param, Reg, RegS8};
+use super::{Addr, Imm, InstructionControl, Param, Reg, RegI8};
 use crate::cpu::CPU;
 use std::{num::Wrapping, ops::Add};
 
 pub struct LD(pub Param, pub Param);
 
 impl InstructionControl for LD {
-    #[inline]
     fn call(self, cpu: &mut CPU) -> usize {
         match (self.0, self.1) {
-            (Param::Reg(Reg::A), Param::N8(n)) => {
+            (Param::Reg(Reg::A), Param::Imm(Imm::U8(n))) => {
                 cpu.reg.a = Wrapping(n);
                 8
             }
-            (Param::Reg(Reg::B), Param::N8(n)) => {
+            (Param::Reg(Reg::B), Param::Imm(Imm::U8(n))) => {
                 cpu.reg.b = Wrapping(n);
                 8
             }
-            (Param::Reg(Reg::C), Param::N8(n)) => {
+            (Param::Reg(Reg::C), Param::Imm(Imm::U8(n))) => {
                 cpu.reg.c = Wrapping(n);
                 8
             }
-            (Param::Reg(Reg::D), Param::N8(n)) => {
+            (Param::Reg(Reg::D), Param::Imm(Imm::U8(n))) => {
                 cpu.reg.d = Wrapping(n);
                 8
             }
-            (Param::Reg(Reg::E), Param::N8(n)) => {
+            (Param::Reg(Reg::E), Param::Imm(Imm::U8(n))) => {
                 cpu.reg.e = Wrapping(n);
                 8
             }
-            (Param::Reg(Reg::H), Param::N8(n)) => {
+            (Param::Reg(Reg::H), Param::Imm(Imm::U8(n))) => {
                 cpu.reg.h = Wrapping(n);
                 8
             }
-            (Param::Reg(Reg::L), Param::N8(n)) => {
+            (Param::Reg(Reg::L), Param::Imm(Imm::U8(n))) => {
                 cpu.reg.l = Wrapping(n);
                 8
             }
-            (Param::Addr(Addr::HL), Param::N8(n)) => {
+            (Param::Addr(Addr::HL), Param::Imm(Imm::U8(n))) => {
                 cpu.mmu.write(cpu.reg.get_hl(), n);
                 8
             }
@@ -84,23 +83,23 @@ impl InstructionControl for LD {
                 cpu.reg.a = Wrapping(cpu.mmu.read(cpu.reg.c.0 as u16 | 0xff00));
                 8
             }
-            (Param::Reg(Reg::A), Param::Addr(Addr::HL_INC)) => {
+            (Param::Reg(Reg::A), Param::Addr(Addr::HLInc)) => {
                 let hl = cpu.reg.get_hl();
                 cpu.reg.a = Wrapping(cpu.mmu.read(hl));
                 cpu.reg.set_hl(hl.wrapping_add(1));
                 8
             }
-            (Param::Reg(Reg::A), Param::Addr(Addr::HL_DEC)) => {
+            (Param::Reg(Reg::A), Param::Addr(Addr::HLDec)) => {
                 let hl = cpu.reg.get_hl();
                 cpu.reg.a = Wrapping(cpu.mmu.read(hl));
                 cpu.reg.set_hl(hl.wrapping_sub(1));
                 8
             }
-            (Param::Reg(Reg::A), Param::Addr(Addr::N8(n))) => {
+            (Param::Reg(Reg::A), Param::Addr(Addr::U8(n))) => {
                 cpu.reg.a = Wrapping(cpu.mmu.read(0xff00 | n as u16));
                 12
             }
-            (Param::Reg(Reg::A), Param::Addr(Addr::N16(n))) => {
+            (Param::Reg(Reg::A), Param::Addr(Addr::U16(n))) => {
                 cpu.reg.a = Wrapping(cpu.mmu.read(n));
                 16
             }
@@ -336,39 +335,39 @@ impl InstructionControl for LD {
                 cpu.mmu.write(cpu.reg.c.0 as u16 | 0xff00, cpu.reg.a.0);
                 8
             }
-            (Param::Addr(Addr::HL_INC), Param::Reg(Reg::A)) => {
+            (Param::Addr(Addr::HLInc), Param::Reg(Reg::A)) => {
                 let hl = cpu.reg.get_hl();
                 cpu.mmu.write(hl, cpu.reg.a.0);
                 cpu.reg.set_hl(hl.wrapping_add(1));
                 8
             }
-            (Param::Addr(Addr::HL_DEC), Param::Reg(Reg::A)) => {
+            (Param::Addr(Addr::HLDec), Param::Reg(Reg::A)) => {
                 let hl = cpu.reg.get_hl();
                 cpu.mmu.write(hl, cpu.reg.a.0);
                 cpu.reg.set_hl(hl.wrapping_sub(1));
                 8
             }
-            (Param::Addr(Addr::N8(n)), Param::Reg(Reg::A)) => {
+            (Param::Addr(Addr::U8(n)), Param::Reg(Reg::A)) => {
                 cpu.mmu.write(0xff00 | n as u16, cpu.reg.a.0);
                 12
             }
-            (Param::Addr(Addr::N16(n)), Param::Reg(Reg::A)) => {
+            (Param::Addr(Addr::U16(n)), Param::Reg(Reg::A)) => {
                 cpu.mmu.write(n, cpu.reg.a.0);
                 16
             }
-            (Param::Reg(Reg::BC), Param::N16(n)) => {
+            (Param::Reg(Reg::BC), Param::Imm(Imm::U16(n))) => {
                 cpu.reg.set_bc(n);
                 12
             }
-            (Param::Reg(Reg::DE), Param::N16(n)) => {
+            (Param::Reg(Reg::DE), Param::Imm(Imm::U16(n))) => {
                 cpu.reg.set_de(n);
                 12
             }
-            (Param::Reg(Reg::HL), Param::N16(n)) => {
+            (Param::Reg(Reg::HL), Param::Imm(Imm::U16(n))) => {
                 cpu.reg.set_hl(n);
                 12
             }
-            (Param::Reg(Reg::SP), Param::N16(n)) => {
+            (Param::Reg(Reg::SP), Param::Imm(Imm::U16(n))) => {
                 cpu.reg.sp.0 = n;
                 12
             }
@@ -376,12 +375,12 @@ impl InstructionControl for LD {
                 cpu.reg.sp.0 = cpu.reg.get_hl();
                 8
             }
-            (Param::Reg(Reg::HL), Param::RegS8(RegS8::SP(n))) => {
-                let hl = cpu.reg.alu_add16(cpu.reg.sp.0, n as i8 as i16 as u16);
+            (Param::Reg(Reg::HL), Param::RegI8(RegI8::SP(n))) => {
+                let hl = cpu.reg.alu_add_sp_i8(n);
                 cpu.reg.set_hl(hl);
                 12
             }
-            (Param::Addr(Addr::N16(n)), Param::Reg(Reg::SP)) => {
+            (Param::Addr(Addr::U16(n)), Param::Reg(Reg::SP)) => {
                 cpu.mmu.write_word(n, cpu.reg.sp.0);
                 20
             }

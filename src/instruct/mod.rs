@@ -1,7 +1,24 @@
+mod adc;
+mod add;
+mod and;
+mod cp;
+mod daa;
+mod dec;
+mod inc;
 mod ld;
 mod nop;
+mod or;
+mod pop;
+mod push;
+mod sbc;
+mod sub;
+mod xor;
+mod cpl;
 
-use self::{ld::LD, nop::NOP};
+use self::{
+    adc::ADC, add::ADD, and::AND, cp::CP, daa::DAA, dec::DEC, inc::INC, ld::LD, nop::NOP, or::OR,
+    pop::POP, push::PUSH, sbc::SBC, sub::SUB, xor::XOR,
+};
 use crate::cpu::CPU;
 use enum_dispatch::enum_dispatch;
 
@@ -14,6 +31,19 @@ pub trait InstructionControl {
 pub enum Instruction {
     NOP(NOP),
     LD(LD),
+    PUSH(PUSH),
+    POP(POP),
+    ADD(ADD),
+    ADC(ADC),
+    SUB(SUB),
+    SBC(SBC),
+    AND(AND),
+    OR(OR),
+    XOR(XOR),
+    CP(CP),
+    INC(INC),
+    DEC(DEC),
+    DAA(DAA),
 }
 
 impl Instruction {
@@ -21,14 +51,15 @@ impl Instruction {
         let opcode = cpu.fetch();
         match opcode {
             0x00 => Self::NOP(NOP),
-            0x06 => Self::LD(LD(Param::Reg(Reg::B), Param::N8(cpu.fetch()))),
-            0x0e => Self::LD(LD(Param::Reg(Reg::C), Param::N8(cpu.fetch()))),
-            0x16 => Self::LD(LD(Param::Reg(Reg::D), Param::N8(cpu.fetch()))),
-            0x1e => Self::LD(LD(Param::Reg(Reg::E), Param::N8(cpu.fetch()))),
-            0x26 => Self::LD(LD(Param::Reg(Reg::H), Param::N8(cpu.fetch()))),
-            0x2e => Self::LD(LD(Param::Reg(Reg::L), Param::N8(cpu.fetch()))),
-            0x36 => Self::LD(LD(Param::Addr(Addr::HL), Param::N8(cpu.fetch()))),
-            0x3e => Self::LD(LD(Param::Reg(Reg::A), Param::N8(cpu.fetch()))),
+            0x06 => Self::LD(LD(Param::Reg(Reg::B), Param::Imm(Imm::U8(cpu.fetch())))),
+            0x0e => Self::LD(LD(Param::Reg(Reg::C), Param::Imm(Imm::U8(cpu.fetch())))),
+            0x16 => Self::LD(LD(Param::Reg(Reg::D), Param::Imm(Imm::U8(cpu.fetch())))),
+            0x1e => Self::LD(LD(Param::Reg(Reg::E), Param::Imm(Imm::U8(cpu.fetch())))),
+            0x22 => Self::LD(LD(Param::Addr(Addr::HLInc), Param::Reg(Reg::A))),
+            0x26 => Self::LD(LD(Param::Reg(Reg::H), Param::Imm(Imm::U8(cpu.fetch())))),
+            0x2e => Self::LD(LD(Param::Reg(Reg::L), Param::Imm(Imm::U8(cpu.fetch())))),
+            0x36 => Self::LD(LD(Param::Addr(Addr::HL), Param::Imm(Imm::U8(cpu.fetch())))),
+            0x3e => Self::LD(LD(Param::Reg(Reg::A), Param::Imm(Imm::U8(cpu.fetch())))),
             0x40 => Self::LD(LD(Param::Reg(Reg::B), Param::Reg(Reg::B))),
             0x41 => Self::LD(LD(Param::Reg(Reg::B), Param::Reg(Reg::C))),
             0x42 => Self::LD(LD(Param::Reg(Reg::B), Param::Reg(Reg::D))),
@@ -96,8 +127,119 @@ impl Instruction {
             0x12 => Self::LD(LD(Param::Addr(Addr::DE), Param::Reg(Reg::A))),
             0x0a => Self::LD(LD(Param::Reg(Reg::A), Param::Addr(Addr::BC))),
             0x1a => Self::LD(LD(Param::Reg(Reg::A), Param::Addr(Addr::DE))),
-
-            _ => unreachable!(),
+            0xe2 => Self::LD(LD(Param::Addr(Addr::C), Param::Reg(Reg::A))),
+            0xf2 => Self::LD(LD(Param::Reg(Reg::A), Param::Addr(Addr::C))),
+            0xc5 => Self::PUSH(PUSH(Reg::BC)),
+            0xd5 => Self::PUSH(PUSH(Reg::DE)),
+            0xe5 => Self::PUSH(PUSH(Reg::HL)),
+            0xf5 => Self::PUSH(PUSH(Reg::AF)),
+            0xc1 => Self::POP(POP(Reg::BC)),
+            0xd1 => Self::POP(POP(Reg::DE)),
+            0xe1 => Self::POP(POP(Reg::HL)),
+            0xf1 => Self::POP(POP(Reg::AF)),
+            0x80 => Self::ADD(ADD(Param::Reg(Reg::A), Param::Reg(Reg::B))),
+            0x81 => Self::ADD(ADD(Param::Reg(Reg::A), Param::Reg(Reg::C))),
+            0x82 => Self::ADD(ADD(Param::Reg(Reg::A), Param::Reg(Reg::D))),
+            0x83 => Self::ADD(ADD(Param::Reg(Reg::A), Param::Reg(Reg::E))),
+            0x84 => Self::ADD(ADD(Param::Reg(Reg::A), Param::Reg(Reg::H))),
+            0x85 => Self::ADD(ADD(Param::Reg(Reg::A), Param::Reg(Reg::L))),
+            0x86 => Self::ADD(ADD(Param::Reg(Reg::A), Param::Addr(Addr::HL))),
+            0x87 => Self::ADD(ADD(Param::Reg(Reg::A), Param::Reg(Reg::A))),
+            0xc6 => Self::ADD(ADD(Param::Reg(Reg::A), Param::Imm(Imm::U8(cpu.fetch())))),
+            0x88 => Self::ADC(ADC(Param::Reg(Reg::A), Param::Reg(Reg::B))),
+            0x89 => Self::ADC(ADC(Param::Reg(Reg::A), Param::Reg(Reg::C))),
+            0x8a => Self::ADC(ADC(Param::Reg(Reg::A), Param::Reg(Reg::D))),
+            0x8b => Self::ADC(ADC(Param::Reg(Reg::A), Param::Reg(Reg::E))),
+            0x8c => Self::ADC(ADC(Param::Reg(Reg::A), Param::Reg(Reg::H))),
+            0x8d => Self::ADC(ADC(Param::Reg(Reg::A), Param::Reg(Reg::L))),
+            0x8e => Self::ADC(ADC(Param::Reg(Reg::A), Param::Addr(Addr::HL))),
+            0x8f => Self::ADC(ADC(Param::Reg(Reg::A), Param::Reg(Reg::A))),
+            0xce => Self::ADC(ADC(Param::Reg(Reg::A), Param::Imm(Imm::U8(cpu.fetch())))),
+            0x90 => Self::SUB(SUB(Param::Reg(Reg::A), Param::Reg(Reg::B))),
+            0x91 => Self::SUB(SUB(Param::Reg(Reg::A), Param::Reg(Reg::C))),
+            0x92 => Self::SUB(SUB(Param::Reg(Reg::A), Param::Reg(Reg::D))),
+            0x93 => Self::SUB(SUB(Param::Reg(Reg::A), Param::Reg(Reg::E))),
+            0x94 => Self::SUB(SUB(Param::Reg(Reg::A), Param::Reg(Reg::H))),
+            0x95 => Self::SUB(SUB(Param::Reg(Reg::A), Param::Reg(Reg::L))),
+            0x96 => Self::SUB(SUB(Param::Reg(Reg::A), Param::Addr(Addr::HL))),
+            0x97 => Self::SUB(SUB(Param::Reg(Reg::A), Param::Reg(Reg::A))),
+            0xd6 => Self::SUB(SUB(Param::Reg(Reg::A), Param::Imm(Imm::U8(cpu.fetch())))),
+            0x98 => Self::SBC(SBC(Param::Reg(Reg::A), Param::Reg(Reg::B))),
+            0x99 => Self::SBC(SBC(Param::Reg(Reg::A), Param::Reg(Reg::C))),
+            0x9a => Self::SBC(SBC(Param::Reg(Reg::A), Param::Reg(Reg::D))),
+            0x9b => Self::SBC(SBC(Param::Reg(Reg::A), Param::Reg(Reg::E))),
+            0x9c => Self::SBC(SBC(Param::Reg(Reg::A), Param::Reg(Reg::H))),
+            0x9d => Self::SBC(SBC(Param::Reg(Reg::A), Param::Reg(Reg::L))),
+            0x9e => Self::SBC(SBC(Param::Reg(Reg::A), Param::Addr(Addr::HL))),
+            0x9f => Self::SBC(SBC(Param::Reg(Reg::A), Param::Reg(Reg::A))),
+            0xde => Self::SBC(SBC(Param::Reg(Reg::A), Param::Imm(Imm::U8(cpu.fetch())))),
+            0xa0 => Self::AND(AND(Param::Reg(Reg::A), Param::Reg(Reg::B))),
+            0xa1 => Self::AND(AND(Param::Reg(Reg::A), Param::Reg(Reg::C))),
+            0xa2 => Self::AND(AND(Param::Reg(Reg::A), Param::Reg(Reg::D))),
+            0xa3 => Self::AND(AND(Param::Reg(Reg::A), Param::Reg(Reg::E))),
+            0xa4 => Self::AND(AND(Param::Reg(Reg::A), Param::Reg(Reg::H))),
+            0xa5 => Self::AND(AND(Param::Reg(Reg::A), Param::Reg(Reg::L))),
+            0xa6 => Self::AND(AND(Param::Reg(Reg::A), Param::Addr(Addr::HL))),
+            0xa7 => Self::AND(AND(Param::Reg(Reg::A), Param::Reg(Reg::A))),
+            0xe6 => Self::AND(AND(Param::Reg(Reg::A), Param::Imm(Imm::U8(cpu.fetch())))),
+            0xb0 => Self::OR(OR(Param::Reg(Reg::A), Param::Reg(Reg::B))),
+            0xb1 => Self::OR(OR(Param::Reg(Reg::A), Param::Reg(Reg::C))),
+            0xb2 => Self::OR(OR(Param::Reg(Reg::A), Param::Reg(Reg::D))),
+            0xb3 => Self::OR(OR(Param::Reg(Reg::A), Param::Reg(Reg::E))),
+            0xb4 => Self::OR(OR(Param::Reg(Reg::A), Param::Reg(Reg::H))),
+            0xb5 => Self::OR(OR(Param::Reg(Reg::A), Param::Reg(Reg::L))),
+            0xb6 => Self::OR(OR(Param::Reg(Reg::A), Param::Addr(Addr::HL))),
+            0xb7 => Self::OR(OR(Param::Reg(Reg::A), Param::Reg(Reg::A))),
+            0xf6 => Self::OR(OR(Param::Reg(Reg::A), Param::Imm(Imm::U8(cpu.fetch())))),
+            0xa8 => Self::XOR(XOR(Param::Reg(Reg::A), Param::Reg(Reg::B))),
+            0xa9 => Self::XOR(XOR(Param::Reg(Reg::A), Param::Reg(Reg::C))),
+            0xaa => Self::XOR(XOR(Param::Reg(Reg::A), Param::Reg(Reg::D))),
+            0xab => Self::XOR(XOR(Param::Reg(Reg::A), Param::Reg(Reg::E))),
+            0xac => Self::XOR(XOR(Param::Reg(Reg::A), Param::Reg(Reg::H))),
+            0xad => Self::XOR(XOR(Param::Reg(Reg::A), Param::Reg(Reg::L))),
+            0xae => Self::XOR(XOR(Param::Reg(Reg::A), Param::Addr(Addr::HL))),
+            0xaf => Self::XOR(XOR(Param::Reg(Reg::A), Param::Reg(Reg::A))),
+            0xee => Self::XOR(XOR(Param::Reg(Reg::A), Param::Imm(Imm::U8(cpu.fetch())))),
+            0xb8 => Self::CP(CP(Param::Reg(Reg::A), Param::Reg(Reg::B))),
+            0xb9 => Self::CP(CP(Param::Reg(Reg::A), Param::Reg(Reg::C))),
+            0xba => Self::CP(CP(Param::Reg(Reg::A), Param::Reg(Reg::D))),
+            0xbb => Self::CP(CP(Param::Reg(Reg::A), Param::Reg(Reg::E))),
+            0xbc => Self::CP(CP(Param::Reg(Reg::A), Param::Reg(Reg::H))),
+            0xbd => Self::CP(CP(Param::Reg(Reg::A), Param::Reg(Reg::L))),
+            0xbe => Self::CP(CP(Param::Reg(Reg::A), Param::Addr(Addr::HL))),
+            0xbf => Self::CP(CP(Param::Reg(Reg::A), Param::Reg(Reg::A))),
+            0xfe => Self::CP(CP(Param::Reg(Reg::A), Param::Imm(Imm::U8(cpu.fetch())))),
+            0x04 => Self::INC(INC(Param::Reg(Reg::B))),
+            0x0c => Self::INC(INC(Param::Reg(Reg::C))),
+            0x14 => Self::INC(INC(Param::Reg(Reg::D))),
+            0x1c => Self::INC(INC(Param::Reg(Reg::E))),
+            0x24 => Self::INC(INC(Param::Reg(Reg::H))),
+            0x2c => Self::INC(INC(Param::Reg(Reg::L))),
+            0x34 => Self::INC(INC(Param::Addr(Addr::HL))),
+            0x3c => Self::INC(INC(Param::Reg(Reg::A))),
+            0x05 => Self::DEC(DEC(Param::Reg(Reg::B))),
+            0x0d => Self::DEC(DEC(Param::Reg(Reg::C))),
+            0x15 => Self::DEC(DEC(Param::Reg(Reg::D))),
+            0x1d => Self::DEC(DEC(Param::Reg(Reg::E))),
+            0x25 => Self::DEC(DEC(Param::Reg(Reg::H))),
+            0x2d => Self::DEC(DEC(Param::Reg(Reg::L))),
+            0x35 => Self::DEC(DEC(Param::Addr(Addr::HL))),
+            0x3d => Self::DEC(DEC(Param::Reg(Reg::A))),
+            0x09 => Self::ADD(ADD(Param::Reg(Reg::HL), Param::Reg(Reg::BC))),
+            0x19 => Self::ADD(ADD(Param::Reg(Reg::HL), Param::Reg(Reg::DE))),
+            0x29 => Self::ADD(ADD(Param::Reg(Reg::HL), Param::Reg(Reg::HL))),
+            0x39 => Self::ADD(ADD(Param::Reg(Reg::HL), Param::Reg(Reg::SP))),
+            0xe8 => Self::ADD(ADD(Param::Reg(Reg::SP), Param::Imm(Imm::U8(cpu.fetch())))),
+            0x03 => Self::INC(INC(Param::Reg(Reg::BC))),
+            0x13 => Self::INC(INC(Param::Reg(Reg::DE))),
+            0x23 => Self::INC(INC(Param::Reg(Reg::HL))),
+            0x33 => Self::INC(INC(Param::Reg(Reg::SP))),
+            0x0b => Self::DEC(DEC(Param::Reg(Reg::BC))),
+            0x1b => Self::DEC(DEC(Param::Reg(Reg::DE))),
+            0x2b => Self::DEC(DEC(Param::Reg(Reg::HL))),
+            0x3b => Self::DEC(DEC(Param::Reg(Reg::SP))),
+            0x27 => Self::DAA(DAA),
+            _ => unreachable!("unknown opcode {opcode:x}"),
         }
     }
 }
@@ -105,10 +247,9 @@ impl Instruction {
 enum Param {
     Reg(Reg),
     Addr(Addr),
-    N8(u8),
-    N16(u16),
+    Imm(Imm),
     /// register + (signed 8-bits directly number)
-    RegS8(RegS8),
+    RegI8(RegI8),
 }
 
 enum Reg {
@@ -122,6 +263,7 @@ enum Reg {
     BC,
     DE,
     HL,
+    AF,
     SP,
 }
 
@@ -130,12 +272,17 @@ enum Addr {
     BC,
     DE,
     C,
-    HL_INC,
-    HL_DEC,
-    N8(u8),
-    N16(u16),
+    HLInc,
+    HLDec,
+    U8(u8),
+    U16(u16),
 }
 
-enum RegS8 {
+enum Imm {
+    U8(u8),
+    U16(u16),
+}
+
+enum RegI8 {
     SP(u8),
 }
