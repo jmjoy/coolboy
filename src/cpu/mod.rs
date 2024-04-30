@@ -1,6 +1,8 @@
+mod instruct;
+
 use crate::{
     clock::ClockSyncer,
-    instruct::{self, Instruction, InstructionControl},
+    cpu::instruct::{Instruction, InstructionControl},
     mmu::MMU,
 };
 use bitflags::bitflags;

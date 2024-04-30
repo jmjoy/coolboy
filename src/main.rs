@@ -2,7 +2,6 @@ mod bus;
 mod clock;
 mod cpu;
 mod device;
-mod instruct;
 mod mbc;
 mod mmu;
 mod serial;
