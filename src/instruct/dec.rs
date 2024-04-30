@@ -8,31 +8,31 @@ impl InstructionControl for DEC {
     fn call(self, cpu: &mut CPU) -> usize {
         match self.0 {
             Param::Reg(Reg::A) => {
-                cpu.reg.a.0 = cpu.reg.alu_dec(cpu.reg.a.0);
+                cpu.reg.a = cpu.reg.alu_dec(cpu.reg.a);
                 4
             }
             Param::Reg(Reg::B) => {
-                cpu.reg.b.0 = cpu.reg.alu_dec(cpu.reg.b.0);
+                cpu.reg.b = cpu.reg.alu_dec(cpu.reg.b);
                 4
             }
             Param::Reg(Reg::C) => {
-                cpu.reg.c.0 = cpu.reg.alu_dec(cpu.reg.c.0);
+                cpu.reg.c = cpu.reg.alu_dec(cpu.reg.c);
                 4
             }
             Param::Reg(Reg::D) => {
-                cpu.reg.d.0 = cpu.reg.alu_dec(cpu.reg.d.0);
+                cpu.reg.d = cpu.reg.alu_dec(cpu.reg.d);
                 4
             }
             Param::Reg(Reg::E) => {
-                cpu.reg.e.0 = cpu.reg.alu_dec(cpu.reg.e.0);
+                cpu.reg.e = cpu.reg.alu_dec(cpu.reg.e);
                 4
             }
             Param::Reg(Reg::H) => {
-                cpu.reg.h.0 = cpu.reg.alu_dec(cpu.reg.h.0);
+                cpu.reg.h = cpu.reg.alu_dec(cpu.reg.h);
                 4
             }
             Param::Reg(Reg::L) => {
-                cpu.reg.l.0 = cpu.reg.alu_dec(cpu.reg.l.0);
+                cpu.reg.l = cpu.reg.alu_dec(cpu.reg.l);
                 4
             }
             Param::Addr(Addr::HL) => {

@@ -2,6 +2,7 @@ mod adc;
 mod add;
 mod and;
 mod cp;
+mod cpl;
 mod daa;
 mod dec;
 mod inc;
@@ -13,11 +14,11 @@ mod push;
 mod sbc;
 mod sub;
 mod xor;
-mod cpl;
+mod ccf;
+mod scf;
 
 use self::{
-    adc::ADC, add::ADD, and::AND, cp::CP, daa::DAA, dec::DEC, inc::INC, ld::LD, nop::NOP, or::OR,
-    pop::POP, push::PUSH, sbc::SBC, sub::SUB, xor::XOR,
+    adc::ADC, add::ADD, and::AND, ccf::CCF, cp::CP, cpl::CPL, daa::DAA, dec::DEC, inc::INC, ld::LD, nop::NOP, or::OR, pop::POP, push::PUSH, sbc::SBC, scf::SCF, sub::SUB, xor::XOR
 };
 use crate::cpu::CPU;
 use enum_dispatch::enum_dispatch;
@@ -44,6 +45,9 @@ pub enum Instruction {
     INC(INC),
     DEC(DEC),
     DAA(DAA),
+    CPL(CPL),
+    CCF(CCF),
+    SCF(SCF),
 }
 
 impl Instruction {
@@ -239,6 +243,9 @@ impl Instruction {
             0x2b => Self::DEC(DEC(Param::Reg(Reg::HL))),
             0x3b => Self::DEC(DEC(Param::Reg(Reg::SP))),
             0x27 => Self::DAA(DAA),
+            0x2f => Self::CPL(CPL),
+            0x3f => Self::CCF(CCF),
+            0x37 => Self::SCF(SCF),
             _ => unreachable!("unknown opcode {opcode:x}"),
         }
     }

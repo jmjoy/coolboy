@@ -5,7 +5,7 @@ pub struct NOP;
 
 impl InstructionControl for NOP {
     #[inline]
-    fn call(self, cpu: &mut CPU) -> usize {
+    fn call(self, _cpu: &mut CPU) -> usize {
         1
     }
 }

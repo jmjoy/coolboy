@@ -7,15 +7,15 @@ use bitflags::bitflags;
 use std::num::Wrapping;
 
 pub struct Register {
-    pub a: Wrapping<u8>,
-    pub b: Wrapping<u8>,
-    pub c: Wrapping<u8>,
-    pub d: Wrapping<u8>,
-    pub e: Wrapping<u8>,
+    pub a: u8,
+    pub b: u8,
+    pub c: u8,
+    pub d: u8,
+    pub e: u8,
     /// flag register
     pub f: Flags,
-    pub h: Wrapping<u8>,
-    pub l: Wrapping<u8>,
+    pub h: u8,
+    pub l: u8,
     /// program counter
     pub pc: Wrapping<u16>,
     /// stack pointer
@@ -26,14 +26,14 @@ impl Register {
     #[inline]
     pub fn new() -> Self {
         Self {
-            a: Wrapping(0),
-            b: Wrapping(0),
-            c: Wrapping(0),
-            d: Wrapping(0),
-            e: Wrapping(0),
+            a: 0,
+            b: 0,
+            c: 0,
+            d: 0,
+            e: 0,
             f: Flags::empty(),
-            h: Wrapping(0),
-            l: Wrapping(0),
+            h: 0,
+            l: 0,
             pc: Wrapping(0x0100),
             sp: Wrapping(0xFFFE),
         }
@@ -41,45 +41,45 @@ impl Register {
 
     #[inline]
     pub fn get_hl(&self) -> u16 {
-        (self.h.0 as u16) << 8 | (self.l.0 as u16)
+        (self.h as u16) << 8 | (self.l as u16)
     }
 
     #[inline]
     pub fn set_hl(&mut self, value: u16) {
-        self.h.0 = (value >> 8) as u8;
-        self.l.0 = value as u8;
+        self.h = (value >> 8) as u8;
+        self.l = value as u8;
     }
 
     #[inline]
     pub fn get_bc(&self) -> u16 {
-        (self.b.0 as u16) << 8 | (self.c.0 as u16)
+        (self.b as u16) << 8 | (self.c as u16)
     }
 
     #[inline]
     pub fn set_bc(&mut self, value: u16) {
-        self.b.0 = (value >> 8) as u8;
-        self.c.0 = value as u8;
+        self.b = (value >> 8) as u8;
+        self.c = value as u8;
     }
 
     #[inline]
     pub fn get_de(&self) -> u16 {
-        (self.d.0 as u16) << 8 | (self.e.0 as u16)
+        (self.d as u16) << 8 | (self.e as u16)
     }
 
     #[inline]
     pub fn set_de(&mut self, value: u16) {
-        self.d.0 = (value >> 8) as u8;
-        self.e.0 = value as u8;
+        self.d = (value >> 8) as u8;
+        self.e = value as u8;
     }
 
     #[inline]
     pub fn get_af(&self) -> u16 {
-        (self.a.0 as u16) << 8 | (self.f.bits() as u16)
+        (self.a as u16) << 8 | (self.f.bits() as u16)
     }
 
     #[inline]
     pub fn set_af(&mut self, value: u16) {
-        self.a.0 = (value >> 8) as u8;
+        self.a = (value >> 8) as u8;
         self.f = Flags::from_bits_retain(value as u8);
     }
 
@@ -189,8 +189,8 @@ impl Register {
         value
     }
 
-    pub fn alu_daa(&mut self, a: u8) -> u8 {
-        let mut a = Wrapping(a);
+    pub fn alu_daa(&mut self, val: u8) -> u8 {
+        let mut val = Wrapping(val);
 
         let mut adjust = if self.f.contains(Flags::C) {
             0x60
@@ -201,22 +201,22 @@ impl Register {
             adjust |= 0x06;
         };
         if !self.f.contains(Flags::N) {
-            if a.0 & 0x0F > 0x09 {
+            if val.0 & 0x0F > 0x09 {
                 adjust |= 0x06;
             };
-            if a.0 > 0x99 {
+            if val.0 > 0x99 {
                 adjust |= 0x60;
             };
-            a += adjust;
+            val += adjust;
         } else {
-            a -= adjust;
+            val -= adjust;
         }
 
-        self.f.set(Flags::Z, a.0 == 0);
+        self.f.set(Flags::Z, val.0 == 0);
         self.f.set(Flags::C, adjust >= 0x60);
         self.f.remove(Flags::H);
 
-        a.0
+        val.0
     }
 }
 
@@ -238,10 +238,11 @@ bitflags! {
 pub struct CPU {
     pub reg: Register,
     syncer: ClockSyncer,
-    instruction: Option<Instruction>,
     remain_ticks: usize,
 
     pub mmu: MMU,
+
+    pub halted: bool,
 }
 
 impl CPU {
@@ -249,9 +250,9 @@ impl CPU {
         Self {
             reg: Register::new(),
             syncer,
-            instruction: None,
             remain_ticks: 0,
             mmu,
+            halted: false,
         }
     }
 
@@ -270,7 +271,7 @@ impl CPU {
             return;
         }
 
-        self.remain_ticks = Instruction::fetch(self).call(self) * 4;
+        self.remain_ticks = Instruction::fetch(self).call(self);
 
         // let instruction = self.instruction.take();
         // match instruction {
@@ -279,7 +280,7 @@ impl CPU {
         //     }
         //     None => {
         //         // TODO load instruction
-        //         let opcode = self.mmu.read(self.reg.pc.0);
+        //         let opcode = self.mmu.read(self.reg.pc);
         //         self.instruction = Some(Instruction::new(opcode));
         //         self.reg.pc += 1;
 
