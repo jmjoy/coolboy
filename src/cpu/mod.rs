@@ -8,20 +8,20 @@ use crate::{
 use bitflags::bitflags;
 use std::num::Wrapping;
 
-pub struct Register {
-    pub a: u8,
-    pub b: u8,
-    pub c: u8,
-    pub d: u8,
-    pub e: u8,
+struct Register {
+    a: u8,
+    b: u8,
+    c: u8,
+    d: u8,
+    e: u8,
     /// flag register
-    pub f: Flags,
-    pub h: u8,
-    pub l: u8,
+    f: Flags,
+    h: u8,
+    l: u8,
     /// program counter
-    pub pc: Wrapping<u16>,
+    pc: Wrapping<u16>,
     /// stack pointer
-    pub sp: Wrapping<u16>,
+    sp: Wrapping<u16>,
 }
 
 impl Register {
@@ -42,50 +42,50 @@ impl Register {
     }
 
     #[inline]
-    pub fn get_hl(&self) -> u16 {
+    fn get_hl(&self) -> u16 {
         (self.h as u16) << 8 | (self.l as u16)
     }
 
     #[inline]
-    pub fn set_hl(&mut self, value: u16) {
+    fn set_hl(&mut self, value: u16) {
         self.h = (value >> 8) as u8;
         self.l = value as u8;
     }
 
     #[inline]
-    pub fn get_bc(&self) -> u16 {
+    fn get_bc(&self) -> u16 {
         (self.b as u16) << 8 | (self.c as u16)
     }
 
     #[inline]
-    pub fn set_bc(&mut self, value: u16) {
+    fn set_bc(&mut self, value: u16) {
         self.b = (value >> 8) as u8;
         self.c = value as u8;
     }
 
     #[inline]
-    pub fn get_de(&self) -> u16 {
+    fn get_de(&self) -> u16 {
         (self.d as u16) << 8 | (self.e as u16)
     }
 
     #[inline]
-    pub fn set_de(&mut self, value: u16) {
+    fn set_de(&mut self, value: u16) {
         self.d = (value >> 8) as u8;
         self.e = value as u8;
     }
 
     #[inline]
-    pub fn get_af(&self) -> u16 {
+    fn get_af(&self) -> u16 {
         (self.a as u16) << 8 | (self.f.bits() as u16)
     }
 
     #[inline]
-    pub fn set_af(&mut self, value: u16) {
+    fn set_af(&mut self, value: u16) {
         self.a = (value >> 8) as u8;
         self.f = Flags::from_bits_retain(value as u8);
     }
 
-    pub fn alu_add(&mut self, value1: u8, value2: u8) -> u8 {
+    fn alu_add(&mut self, value1: u8, value2: u8) -> u8 {
         let (value, overflow) = value1.overflowing_add(value2);
         self.f.set(Flags::Z, value == 0);
         self.f.remove(Flags::N);
@@ -94,7 +94,7 @@ impl Register {
         value
     }
 
-    pub fn alu_adc(&mut self, value1: u8, value2: u8) -> u8 {
+    fn alu_adc(&mut self, value1: u8, value2: u8) -> u8 {
         let c = self.f.contains(Flags::C) as u8;
         let (value, overflow) = value1.overflowing_add(value2);
         let (value, overflow2) = value.overflowing_add(c);
@@ -106,7 +106,7 @@ impl Register {
         value
     }
 
-    pub fn alu_sub(&mut self, value1: u8, value2: u8) -> u8 {
+    fn alu_sub(&mut self, value1: u8, value2: u8) -> u8 {
         let (value, overflow) = value1.overflowing_sub(value2);
         self.f.set(Flags::Z, value == 0);
         self.f.insert(Flags::N);
@@ -115,7 +115,7 @@ impl Register {
         value
     }
 
-    pub fn alu_sbc(&mut self, value1: u8, value2: u8) -> u8 {
+    fn alu_sbc(&mut self, value1: u8, value2: u8) -> u8 {
         let c = self.f.contains(Flags::C) as u8;
         let (value, overflow) = value1.overflowing_sub(value2);
         let (value, overflow2) = value.overflowing_sub(c);
@@ -127,7 +127,7 @@ impl Register {
         value
     }
 
-    pub fn alu_and(&mut self, value1: u8, value2: u8) -> u8 {
+    fn alu_and(&mut self, value1: u8, value2: u8) -> u8 {
         let value = value1 & value2;
         self.f.set(Flags::Z, value == 0);
         self.f.remove(Flags::N);
@@ -136,7 +136,7 @@ impl Register {
         value
     }
 
-    pub fn alu_or(&mut self, value1: u8, value2: u8) -> u8 {
+    fn alu_or(&mut self, value1: u8, value2: u8) -> u8 {
         let value = value1 | value2;
         self.f.set(Flags::Z, value == 0);
         self.f.remove(Flags::N);
@@ -145,7 +145,7 @@ impl Register {
         value
     }
 
-    pub fn alu_xor(&mut self, value1: u8, value2: u8) -> u8 {
+    fn alu_xor(&mut self, value1: u8, value2: u8) -> u8 {
         let value = value1 ^ value2;
         self.f.set(Flags::Z, value == 0);
         self.f.remove(Flags::N);
@@ -154,7 +154,7 @@ impl Register {
         value
     }
 
-    pub fn alu_inc(&mut self, value1: u8) -> u8 {
+    fn alu_inc(&mut self, value1: u8) -> u8 {
         let value = value1.wrapping_add(1);
         self.f.set(Flags::Z, value == 0);
         self.f.remove(Flags::N);
@@ -162,7 +162,7 @@ impl Register {
         value
     }
 
-    pub fn alu_dec(&mut self, value1: u8) -> u8 {
+    fn alu_dec(&mut self, value1: u8) -> u8 {
         let value = value1.wrapping_sub(1);
         self.f.set(Flags::Z, value == 0);
         self.f.remove(Flags::N);
@@ -170,7 +170,7 @@ impl Register {
         value
     }
 
-    pub fn alu_add_sp_i8(&mut self, i: u8) -> u16 {
+    fn alu_add_sp_i8(&mut self, i: u8) -> u16 {
         let sp = self.sp.0;
         let i = i as i8 as i16 as u16;
 
@@ -182,7 +182,7 @@ impl Register {
         sp.wrapping_add(i)
     }
 
-    pub fn alu_add_u16(&mut self, value1: u16, value2: u16) -> u16 {
+    fn alu_add_u16(&mut self, value1: u16, value2: u16) -> u16 {
         let (value, overflow) = value1.overflowing_add(value2);
         self.f.remove(Flags::N);
         self.f
@@ -191,7 +191,7 @@ impl Register {
         value
     }
 
-    pub fn alu_daa(&mut self, val: u8) -> u8 {
+    fn alu_daa(&mut self, val: u8) -> u8 {
         let mut val = Wrapping(val);
 
         let mut adjust = if self.f.contains(Flags::C) {
@@ -225,7 +225,7 @@ impl Register {
 bitflags! {
     /// Represents a set of flags.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    pub struct Flags: u8 {
+    struct Flags: u8 {
         /// zero flag
         const Z = 0b10000000;
         /// negative flag
@@ -238,13 +238,15 @@ bitflags! {
 }
 
 pub struct CPU {
-    pub reg: Register,
+    reg: Register,
     syncer: ClockSyncer,
     remain_ticks: usize,
 
-    pub mmu: MMU,
+    mmu: MMU,
 
-    pub halted: bool,
+    halted: bool,
+    ei: bool,
+    di: bool,
 }
 
 impl CPU {
@@ -255,6 +257,8 @@ impl CPU {
             remain_ticks: 0,
             mmu,
             halted: false,
+            ei: false,
+            di: false,
         }
     }
 
@@ -291,24 +295,24 @@ impl CPU {
         // }
     }
 
-    pub fn fetch(&mut self) -> u8 {
+    fn fetch(&mut self) -> u8 {
         let value = self.mmu.read(self.reg.pc.0);
         self.reg.pc += 1;
         value
     }
 
-    pub fn fetch_word(&mut self) -> u16 {
+    fn fetch_word(&mut self) -> u16 {
         let value = self.mmu.read_word(self.reg.pc.0);
         self.reg.pc += 2;
         value
     }
 
-    pub fn push_stack(&mut self, value: u16) {
+    fn push_stack(&mut self, value: u16) {
         self.reg.sp -= 2;
         self.mmu.write_word(self.reg.sp.0, value);
     }
 
-    pub fn pop_stack(&mut self) -> u16 {
+    fn pop_stack(&mut self) -> u16 {
         let value = self.mmu.read_word(self.reg.sp.0);
         self.reg.sp += 2;
         value

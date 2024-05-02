@@ -1,35 +1,46 @@
 mod adc;
 mod add;
 mod and;
+mod ccf;
 mod cp;
 mod cpl;
 mod daa;
 mod dec;
+mod di;
+mod ei;
+mod halt;
 mod inc;
+mod jp;
+mod jr;
 mod ld;
 mod nop;
 mod or;
 mod pop;
 mod push;
+mod rla;
+mod rlca;
+mod rra;
+mod rrca;
 mod sbc;
+mod scf;
 mod sub;
 mod xor;
-mod ccf;
-mod scf;
 
 use self::{
-    adc::ADC, add::ADD, and::AND, ccf::CCF, cp::CP, cpl::CPL, daa::DAA, dec::DEC, inc::INC, ld::LD, nop::NOP, or::OR, pop::POP, push::PUSH, sbc::SBC, scf::SCF, sub::SUB, xor::XOR
+    adc::ADC, add::ADD, and::AND, ccf::CCF, cp::CP, cpl::CPL, daa::DAA, dec::DEC, di::DI, ei::EI,
+    halt::HALT, inc::INC, jp::JP, jr::JR, ld::LD, nop::NOP, or::OR, pop::POP, push::PUSH, rla::RLA,
+    rlca::RLCA, rra::RRA, rrca::RRCA, sbc::SBC, scf::SCF, sub::SUB, xor::XOR,
 };
 use crate::cpu::CPU;
 use enum_dispatch::enum_dispatch;
 
 #[enum_dispatch]
-pub trait InstructionControl {
+trait InstructionControl {
     fn call(self, cpu: &mut CPU) -> usize;
 }
 
 #[enum_dispatch(InstructionControl)]
-pub enum Instruction {
+enum Instruction {
     NOP(NOP),
     LD(LD),
     PUSH(PUSH),
@@ -48,6 +59,15 @@ pub enum Instruction {
     CPL(CPL),
     CCF(CCF),
     SCF(SCF),
+    HALT(HALT),
+    DI(DI),
+    EI(EI),
+    RLCA(RLCA),
+    RLA(RLA),
+    RRCA(RRCA),
+    RRA(RRA),
+    JP(JP),
+    JR(JR),
 }
 
 impl Instruction {
@@ -246,6 +266,23 @@ impl Instruction {
             0x2f => Self::CPL(CPL),
             0x3f => Self::CCF(CCF),
             0x37 => Self::SCF(SCF),
+            0x76 => Self::HALT(HALT),
+            0xf3 => Self::DI(DI),
+            0xfb => Self::EI(EI),
+            0x07 => Self::RLCA(RLCA),
+            0x17 => Self::RLA(RLA),
+            0x0f => Self::RRCA(RRCA),
+            0x1f => Self::RRA(RRA),
+            0xc3 => Self::JP(JP(None, cpu.fetch_word())),
+            0xc2 => Self::JP(JP(Some(Cond::Z), cpu.fetch_word())),
+            0xca => Self::JP(JP(Some(Cond::NZ), cpu.fetch_word())),
+            0xd2 => Self::JP(JP(Some(Cond::C), cpu.fetch_word())),
+            0xda => Self::JP(JP(Some(Cond::NC), cpu.fetch_word())),
+            0x18 => Self::JR(JR(None, cpu.fetch())),
+            0x20 => Self::JR(JR(Some(Cond::Z), cpu.fetch())),
+            0x28 => Self::JR(JR(Some(Cond::NZ), cpu.fetch())),
+            0x30 => Self::JR(JR(Some(Cond::C), cpu.fetch())),
+            0x38 => Self::JR(JR(Some(Cond::NC), cpu.fetch())),
             _ => unreachable!("unknown opcode {opcode:x}"),
         }
     }
@@ -292,4 +329,11 @@ enum Imm {
 
 enum RegI8 {
     SP(u8),
+}
+
+enum Cond {
+    Z,
+    NZ,
+    C,
+    NC,
 }
